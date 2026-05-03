@@ -59,7 +59,7 @@ export default function StickerCard({ sticker, status, onToggle }) {
       )}
 
       {/* Number */}
-      <span className={`text-[10px] font-bold tabular-nums leading-none text-center ${sticker.special ? 'text-yellow-400' : 'text-gray-500'}`}>
+      <span className={`text-[10px] font-bold tabular-nums leading-none text-center ${sticker.special ? 'text-yellow-300' : 'text-gray-200'}`}>
         {sticker.code}
       </span>
 
