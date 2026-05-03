@@ -1,18 +1,34 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="100" fill="#080E1C"/>
-  <rect width="512" height="512" rx="100" fill="url(#bg)"/>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#003087"/>
+      <stop offset="0%" stop-color="#0A1628"/>
       <stop offset="100%" stop-color="#080E1C"/>
     </linearGradient>
-    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#FFE566"/>
-      <stop offset="100%" stop-color="#FFD700"/>
+      <stop offset="100%" stop-color="#C9A227"/>
     </linearGradient>
   </defs>
-  <!-- Trophy -->
-  <text x="256" y="300" font-size="240" text-anchor="middle" font-family="serif">🏆</text>
-  <!-- Text -->
-  <text x="256" y="410" font-size="56" font-weight="bold" text-anchor="middle" fill="url(#gold)" font-family="sans-serif" letter-spacing="8">MUNDIAL26</text>
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="url(#bg)"/>
+  <!-- Gold border ring -->
+  <rect width="512" height="512" rx="80" fill="none" stroke="url(#gold)" stroke-width="8"/>
+
+  <!-- Trophy cup body -->
+  <path d="M 176 130 L 336 130 L 316 280 Q 256 310 196 280 Z" fill="url(#gold)"/>
+  <!-- Trophy handles left -->
+  <path d="M 176 150 Q 120 160 118 210 Q 116 255 170 260 L 196 250" fill="none" stroke="url(#gold)" stroke-width="18" stroke-linecap="round"/>
+  <!-- Trophy handles right -->
+  <path d="M 336 150 Q 392 160 394 210 Q 396 255 342 260 L 316 250" fill="none" stroke="url(#gold)" stroke-width="18" stroke-linecap="round"/>
+  <!-- Trophy stem -->
+  <rect x="238" y="280" width="36" height="60" fill="url(#gold)"/>
+  <!-- Trophy base -->
+  <rect x="190" y="340" width="132" height="20" rx="6" fill="url(#gold)"/>
+  <rect x="175" y="358" width="162" height="14" rx="6" fill="url(#gold)"/>
+
+  <!-- Star on cup -->
+  <polygon points="256,155 262,173 281,173 267,184 272,202 256,191 240,202 245,184 231,173 250,173" fill="#080E1C" opacity="0.6"/>
+
+  <!-- Text MUNDIAL26 -->
+  <text x="256" y="430" font-size="52" font-weight="900" text-anchor="middle" fill="url(#gold)" font-family="Arial Black, Arial, sans-serif" letter-spacing="2">MUNDIAL26</text>
 </svg>
