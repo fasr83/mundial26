@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Search, Filter, RotateCcw, Star } from 'lucide-react'
 import { useLocalStorage } from '../../hooks/useLocalStorage'
-import { COUNTRIES, INTRO_STICKERS, CONFEDERATIONS } from '../../data/countries'
+import { COUNTRIES, INTRO_STICKERS, CONFEDERATIONS, TOTAL_STICKERS } from '../../data/countries'
 import CountryGrid from './CountryGrid'
 import CountryDetail from './CountryDetail'
 import GlobalSummary from './GlobalSummary'
@@ -134,7 +134,7 @@ export default function AlbumModule() {
             <h1 className="font-display text-4xl text-gradient-gold tracking-wider">
               ÁLBUM PANINI
             </h1>
-            <p className="text-gray-500 text-sm mt-1">FIFA World Cup 2026™ · 48 selecciones · {COUNTRIES.length * 13 + 10} stickers</p>
+            <p className="text-gray-500 text-sm mt-1">FIFA World Cup 2026™ · 48 selecciones · {TOTAL_STICKERS} stickers</p>
           </div>
 
           {/* Filters row */}
