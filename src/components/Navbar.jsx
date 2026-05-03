@@ -1,9 +1,10 @@
-import { BookOpen, Calendar, Trophy, BarChart2 } from 'lucide-react'
+import { BookOpen, Calendar, Trophy, BarChart2, ShoppingCart } from 'lucide-react'
 
 const TABS = [
-  { key: 'album',     label: 'Álbum',       icon: BookOpen   },
-  { key: 'calendar',  label: 'Calendario',  icon: Calendar   },
-  { key: 'standings', label: 'Posiciones',  icon: BarChart2  },
+  { key: 'album',     label: 'Álbum',       icon: BookOpen    },
+  { key: 'calendar',  label: 'Calendario',  icon: Calendar    },
+  { key: 'standings', label: 'Posiciones',  icon: BarChart2   },
+  { key: 'store',     label: 'Tienda',      icon: ShoppingCart },
 ]
 
 export default function Navbar({ activeModule, setActiveModule }) {
