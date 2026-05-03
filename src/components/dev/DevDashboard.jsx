@@ -3,10 +3,10 @@ import {
   BarChart2, Users, Eye, Smartphone, Globe, TrendingUp,
   Key, RefreshCw, LogOut, Star, BookOpen, Calendar, MessageCircle,
   Wifi, WifiOff, Settings, CheckCircle, AlertCircle, ExternalLink,
-  ThumbsUp, ThumbsDown, Loader, ShoppingCart
+  ThumbsUp, ThumbsDown, Loader, Shield, ShieldOff, Ban
 } from 'lucide-react'
 import { getTrackingData } from '../../hooks/useAppTracking'
-import { ref, onValue, update } from 'firebase/database'
+import { ref, onValue, update, set, remove } from 'firebase/database'
 import { db, isFirebaseConfigured } from '../../lib/firebase'
 
 const REPO = 'fasr83/mundial26'
@@ -30,6 +30,123 @@ function SectionTitle({ children }) {
     <h3 className="font-display text-lg text-gray-300 tracking-wider mb-3 flex items-center gap-2">
       {children}
     </h3>
+  )
+}
+
+function BanPanel() {
+  const [messages, setMessages] = useState([])
+  const [banned, setBanned] = useState({})
+  const [actioning, setActioning] = useState({})
+
+  useEffect(() => {
+    if (!isFirebaseConfigured || !db) return
+    const unsubMsg = onValue(
+      ref(db, 'chat/messages'),
+      snap => {
+        const data = snap.val() || {}
+        const list = Object.entries(data)
+          .map(([id, m]) => ({ id, ...m }))
+          .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+          .slice(0, 30)
+        setMessages(list)
+      }
+    )
+    const unsubBan = onValue(ref(db, 'banned'), snap => setBanned(snap.val() || {}))
+    return () => { unsubMsg(); unsubBan() }
+  }, [])
+
+  async function banUser(uid, apodo) {
+    setActioning(p => ({ ...p, [uid]: true }))
+    await set(ref(db, `banned/${uid}`), { apodo, bannedAt: Date.now() })
+    setActioning(p => ({ ...p, [uid]: false }))
+  }
+
+  async function unbanUser(uid) {
+    setActioning(p => ({ ...p, [uid]: true }))
+    await remove(ref(db, `banned/${uid}`))
+    setActioning(p => ({ ...p, [uid]: false }))
+  }
+
+  if (!isFirebaseConfigured) return null
+
+  const bannedList = Object.entries(banned)
+
+  return (
+    <div className="space-y-5">
+      {/* Usuarios baneados */}
+      {bannedList.length > 0 && (
+        <div>
+          <p className="text-xs text-red-400 uppercase tracking-wider mb-2 font-semibold">
+            {bannedList.length} usuario{bannedList.length !== 1 ? 's' : ''} baneado{bannedList.length !== 1 ? 's' : ''}
+          </p>
+          <div className="space-y-2">
+            {bannedList.map(([uid, info]) => (
+              <div key={uid} className="bg-red-900/20 border border-red-900/40 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-red-300 text-sm font-semibold">{info.apodo || 'Anónimo'}</p>
+                  <p className="text-red-800 text-[10px] font-mono">{uid}</p>
+                </div>
+                <button
+                  onClick={() => unbanUser(uid)}
+                  disabled={actioning[uid]}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600/20 border border-green-500/40 text-green-400 text-xs font-semibold rounded-lg hover:bg-green-600/30 disabled:opacity-40 transition-colors"
+                >
+                  {actioning[uid] ? <Loader className="w-3 h-3 animate-spin" /> : <ShieldOff className="w-3 h-3" />}
+                  Desbanear
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Mensajes recientes del chat */}
+      <div>
+        <p className="text-xs text-gray-500 uppercase tracking-wider mb-2 font-semibold">Mensajes recientes del chat</p>
+        {messages.length === 0 ? (
+          <p className="text-gray-600 text-sm text-center py-6">No hay mensajes aún.</p>
+        ) : (
+          <div className="space-y-2">
+            {messages.map(msg => {
+              const isBanned = !!banned[msg.uid]
+              return (
+                <div key={msg.id} className={`rounded-xl px-4 py-3 flex items-start justify-between gap-3 border ${
+                  isBanned ? 'bg-red-900/10 border-red-900/30' : 'bg-fifa-card border-fifa-border'
+                }`}>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold mb-0.5">
+                      <span className={isBanned ? 'text-red-500' : 'text-gray-300'}>{msg.apodo || 'Anónimo'}</span>
+                      {isBanned && <span className="text-red-700 ml-2">· BANEADO</span>}
+                    </p>
+                    <p className={`text-sm truncate ${isBanned ? 'text-gray-700 line-through' : 'text-gray-400'}`}>{msg.texto}</p>
+                    <p className="text-[10px] text-gray-700 font-mono mt-0.5">{msg.uid}</p>
+                  </div>
+                  {isBanned ? (
+                    <button
+                      onClick={() => unbanUser(msg.uid)}
+                      disabled={actioning[msg.uid]}
+                      className="flex items-center gap-1 px-2.5 py-1.5 bg-green-600/20 border border-green-500/40 text-green-400 text-xs rounded-lg hover:bg-green-600/30 disabled:opacity-40 shrink-0 transition-colors"
+                    >
+                      {actioning[msg.uid] ? <Loader className="w-3 h-3 animate-spin" /> : <ShieldOff className="w-3 h-3" />}
+                      Desbanear
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => banUser(msg.uid, msg.apodo)}
+                      disabled={actioning[msg.uid]}
+                      className="flex items-center gap-1 px-2.5 py-1.5 bg-red-600/20 border border-red-500/40 text-red-400 text-xs rounded-lg hover:bg-red-600/30 disabled:opacity-40 shrink-0 transition-colors"
+                    >
+                      {actioning[msg.uid] ? <Loader className="w-3 h-3 animate-spin" /> : <Ban className="w-3 h-3" />}
+                      Banear
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -420,6 +537,12 @@ export default function DevDashboard({ onLogout }) {
         <section>
           <SectionTitle><MessageCircle className="w-4 h-4 text-yellow-400" /> Moderación — Publicaciones Pendientes</SectionTitle>
           <ModerationPanel />
+        </section>
+
+        {/* ── SECCIÓN 4: BANEO DE USUARIOS ─────────────────── */}
+        <section>
+          <SectionTitle><Shield className="w-4 h-4 text-red-400" /> Control de Usuarios — Chat</SectionTitle>
+          <BanPanel />
         </section>
 
         {/* ── SECCIÓN 4: INFO TÉCNICA ───────────────────────── */}

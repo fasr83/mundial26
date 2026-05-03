@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* iOS safe area — navbar */
+nav.safe-nav {
+  padding-top: constant(safe-area-inset-top);
+  padding-top: env(safe-area-inset-top);
+}
+main.safe-main {
+  padding-top: calc(constant(safe-area-inset-top) + 4rem);
+  padding-top: calc(env(safe-area-inset-top) + 4rem);
+}
+
 @layer base {
   * {
     box-sizing: border-box;
