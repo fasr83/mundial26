@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { MessageCircle, MapPin, Plus, Clock, Phone, CheckCircle, Loader, Search, Send, Users, Shield } from 'lucide-react'
+import { MessageCircle, MapPin, Plus, Clock, Phone, CheckCircle, Loader, Search, Send, Users, Shield, ImagePlus, X } from 'lucide-react'
 import { ref, push, onValue, serverTimestamp, query, limitToLast, orderByChild } from 'firebase/database'
 import { db, auth, signInAnonymously, isFirebaseConfigured } from '../../lib/firebase'
 import { CITIES_BY_COUNTRY, LATAM_COUNTRY_IDS } from '../../data/cities.js'
@@ -16,15 +16,42 @@ function timeAgo(ts) {
   return 'ahora'
 }
 
+// ── COMPRIMIR IMAGEN CON CANVAS ───────────────────────────────────────
+function compressImage(file, maxPx = 600, quality = 0.65) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = e => {
+      const img = new Image()
+      img.onload = () => {
+        const scale = Math.min(1, maxPx / Math.max(img.width, img.height))
+        const w = Math.round(img.width * scale)
+        const h = Math.round(img.height * scale)
+        const canvas = document.createElement('canvas')
+        canvas.width = w
+        canvas.height = h
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h)
+        resolve(canvas.toDataURL('image/jpeg', quality))
+      }
+      img.onerror = reject
+      img.src = e.target.result
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
 // ── CHAT GLOBAL ──────────────────────────────────────────────────────
 function GlobalChat({ uid, bannedUids }) {
   const [messages, setMessages] = useState([])
   const [text, setText] = useState('')
+  const [imagePreview, setImagePreview] = useState(null)
   const [apodo, setApodo] = useState(() => localStorage.getItem('mundial26-apodo') || '')
   const [apodoTemp, setApodoTemp] = useState('')
   const [settingApodo, setSettingApodo] = useState(!localStorage.getItem('mundial26-apodo'))
   const [sending, setSending] = useState(false)
+  const [expandedImg, setExpandedImg] = useState(null)
   const bottomRef = useRef(null)
+  const fileRef = useRef(null)
 
   const isBanned = uid && bannedUids[uid]
 
@@ -50,18 +77,31 @@ function GlobalChat({ uid, bannedUids }) {
     setSettingApodo(false)
   }
 
+  async function handleImageSelect(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const compressed = await compressImage(file)
+      setImagePreview(compressed)
+    } catch {}
+    e.target.value = ''
+  }
+
   async function sendMessage(e) {
     e.preventDefault()
-    if (!text.trim() || !uid || !apodo || isBanned) return
+    if ((!text.trim() && !imagePreview) || !uid || !apodo || isBanned) return
     setSending(true)
     try {
-      await push(ref(db, 'chat/messages'), {
-        uid,
-        apodo,
-        texto: text.trim().slice(0, 300),
-        timestamp: serverTimestamp(),
-      })
+      const payload = { uid, apodo, timestamp: serverTimestamp() }
+      if (imagePreview) {
+        payload.imagen = imagePreview
+        if (text.trim()) payload.texto = text.trim().slice(0, 300)
+      } else {
+        payload.texto = text.trim().slice(0, 300)
+      }
+      await push(ref(db, 'chat/messages'), payload)
       setText('')
+      setImagePreview(null)
     } catch {}
     setSending(false)
   }
@@ -134,14 +174,30 @@ function GlobalChat({ uid, bannedUids }) {
                   {banned ? <span className="text-red-700">bloqueado</span> : msg.apodo}
                   {' · '}{timeAgo(msg.timestamp)}
                 </span>
-                <div className={`px-3 py-2 rounded-2xl text-sm ${
+                <div className={`rounded-2xl text-sm overflow-hidden ${
                   banned
-                    ? 'bg-red-900/20 border border-red-900/30 text-red-800 italic text-xs'
+                    ? 'bg-red-900/20 border border-red-900/30 text-red-800 italic text-xs px-3 py-2'
                     : isMe
                       ? 'bg-fifa-gold/15 border border-fifa-gold/20 text-white'
                       : 'bg-fifa-darker border border-fifa-border text-gray-200'
                 }`}>
-                  {banned ? 'Mensaje de usuario bloqueado' : msg.texto}
+                  {banned ? (
+                    <span className="px-3 py-2 block">Mensaje de usuario bloqueado</span>
+                  ) : (
+                    <>
+                      {msg.imagen && (
+                        <img
+                          src={msg.imagen}
+                          alt="imagen"
+                          className="max-w-[220px] rounded-xl cursor-pointer hover:opacity-90 transition-opacity"
+                          onClick={() => setExpandedImg(msg.imagen)}
+                        />
+                      )}
+                      {msg.texto && (
+                        <span className="px-3 py-2 block">{msg.texto}</span>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -158,24 +214,62 @@ function GlobalChat({ uid, bannedUids }) {
             Has sido bloqueado del chat por el administrador.
           </div>
         ) : (
-          <form onSubmit={sendMessage} className="flex gap-2">
-            <input
-              value={text}
-              onChange={e => setText(e.target.value)}
-              placeholder="Escribe un mensaje..."
-              maxLength={300}
-              className="flex-1 bg-fifa-darker border border-fifa-border rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-700 focus:outline-none focus:border-fifa-gold"
-            />
-            <button
-              type="submit"
-              disabled={!text.trim() || sending}
-              className="px-4 py-2.5 bg-gradient-to-r from-fifa-gold to-yellow-400 text-black rounded-xl hover:from-yellow-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-            >
-              {sending ? <Loader className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            </button>
+          <form onSubmit={sendMessage} className="space-y-2">
+            {/* Image preview */}
+            {imagePreview && (
+              <div className="relative w-fit">
+                <img src={imagePreview} alt="preview" className="max-h-28 rounded-xl border border-fifa-gold/30" />
+                <button
+                  type="button"
+                  onClick={() => setImagePreview(null)}
+                  className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center hover:bg-red-400 transition-colors"
+                >
+                  <X className="w-3 h-3 text-white" />
+                </button>
+              </div>
+            )}
+            <div className="flex gap-2">
+              {/* Hidden file input */}
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
+              {/* Image button */}
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="px-3 py-2.5 bg-fifa-darker border border-fifa-border rounded-xl text-gray-400 hover:text-fifa-gold hover:border-fifa-gold/50 transition-all shrink-0"
+              >
+                <ImagePlus className="w-4 h-4" />
+              </button>
+              <input
+                value={text}
+                onChange={e => setText(e.target.value)}
+                placeholder={imagePreview ? 'Añade un texto (opcional)...' : 'Escribe un mensaje...'}
+                maxLength={300}
+                className="flex-1 bg-fifa-darker border border-fifa-border rounded-xl px-4 py-2.5 text-sm text-white placeholder-gray-700 focus:outline-none focus:border-fifa-gold"
+              />
+              <button
+                type="submit"
+                disabled={(!text.trim() && !imagePreview) || sending}
+                className="px-4 py-2.5 bg-gradient-to-r from-fifa-gold to-yellow-400 text-black rounded-xl hover:from-yellow-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0"
+              >
+                {sending ? <Loader className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              </button>
+            </div>
           </form>
         )}
       </div>
+
+      {/* Full-screen image viewer */}
+      {expandedImg && (
+        <div
+          className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setExpandedImg(null)}
+        >
+          <button className="absolute top-4 right-4 text-white hover:text-gray-300">
+            <X className="w-8 h-8" />
+          </button>
+          <img src={expandedImg} alt="imagen ampliada" className="max-w-full max-h-full rounded-xl object-contain" />
+        </div>
+      )}
     </div>
   )
 }
