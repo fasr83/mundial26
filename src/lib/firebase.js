@@ -6,13 +6,13 @@ import { getAuth, signInAnonymously } from 'firebase/auth'
 // Reemplaza estos valores con los de tu proyecto Firebase
 // Panel: https://console.firebase.google.com → Project Settings → Tu app web
 const firebaseConfig = {
-  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY            || '',
-  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN        || '',
-  databaseURL:       import.meta.env.VITE_FIREBASE_DATABASE_URL       || '',
-  projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID         || '',
-  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET     || '',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID|| '',
-  appId:             import.meta.env.VITE_FIREBASE_APP_ID             || '',
+  apiKey:            'AIzaSyBBhq__ftphQ_13mBJ2t76MirAUFFi6UuU',
+  authDomain:        'mundial2026-a94d2.firebaseapp.com',
+  databaseURL:       'https://mundial2026-a94d2-default-rtdb.firebaseio.com',
+  projectId:         'mundial2026-a94d2',
+  storageBucket:     'mundial2026-a94d2.firebasestorage.app',
+  messagingSenderId: '844399128536',
+  appId:             '1:844399128536:web:a3d77f76d8f661b8724cad',
 }
 
 export const isFirebaseConfigured = Object.values(firebaseConfig).every(v => v !== '')
