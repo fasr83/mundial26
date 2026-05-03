@@ -3,7 +3,7 @@ import Navbar from './components/Navbar'
 import AlbumModule from './components/album/AlbumModule'
 import CalendarModule from './components/calendar/CalendarModule'
 import StandingsModule from './components/standings/StandingsModule'
-import StoreModule from './components/store/StoreModule'
+import CommunityModule from './components/community/CommunityModule'
 import DevLogin from './components/dev/DevLogin'
 import DevDashboard from './components/dev/DevDashboard'
 import { useAppTracking } from './hooks/useAppTracking'
@@ -59,7 +59,7 @@ export default function App() {
         {activeModule === 'album'     && <AlbumModule />}
         {activeModule === 'calendar'  && <CalendarModule />}
         {activeModule === 'standings' && <StandingsModule />}
-        {activeModule === 'store'     && <StoreModule />}
+        {activeModule === 'community' && <CommunityModule />}
       </main>
     </div>
   )

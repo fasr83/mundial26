@@ -59,4 +59,14 @@ export default defineConfig({
     }),
   ],
   base: '/mundial26/',
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          firebase: ['firebase/app', 'firebase/database', 'firebase/auth'],
+          react:    ['react', 'react-dom'],
+        },
+      },
+    },
+  },
 })

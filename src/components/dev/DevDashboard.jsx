@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-  BarChart2, Users, Eye, Download, Smartphone, Globe, TrendingUp,
-  Key, RefreshCw, LogOut, Star, BookOpen, Calendar, Trophy, ShoppingCart,
-  Wifi, WifiOff, Settings, CheckCircle, AlertCircle, ExternalLink
+  BarChart2, Users, Eye, Smartphone, Globe, TrendingUp,
+  Key, RefreshCw, LogOut, Star, BookOpen, Calendar, MessageCircle,
+  Wifi, WifiOff, Settings, CheckCircle, AlertCircle, ExternalLink,
+  ThumbsUp, ThumbsDown, Loader, ShoppingCart
 } from 'lucide-react'
 import { getTrackingData } from '../../hooks/useAppTracking'
+import { ref, onValue, update } from 'firebase/database'
+import { db, isFirebaseConfigured } from '../../lib/firebase'
 
 const REPO = 'fasr83/mundial26'
 const GH_TOKEN_KEY = 'mundial26-dev-gh-token'
@@ -27,6 +30,98 @@ function SectionTitle({ children }) {
     <h3 className="font-display text-lg text-gray-300 tracking-wider mb-3 flex items-center gap-2">
       {children}
     </h3>
+  )
+}
+
+function ModerationPanel() {
+  const [pending, setPending] = useState([])
+  const [loadingMod, setLoadingMod] = useState(true)
+  const [actioning, setActioning] = useState({})
+
+  useEffect(() => {
+    if (!isFirebaseConfigured || !db) { setLoadingMod(false); return }
+    const unsub = onValue(ref(db, 'community'), snap => {
+      const data = snap.val() || {}
+      const all = []
+      Object.entries(data).forEach(([country, cities]) => {
+        Object.entries(cities).forEach(([city, cityData]) => {
+          Object.entries(cityData.posts || {}).forEach(([id, post]) => {
+            if (!post.approved) all.push({ id, country, city, ...post })
+          })
+        })
+      })
+      all.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+      setPending(all)
+      setLoadingMod(false)
+    })
+    return () => unsub()
+  }, [])
+
+  async function approve(p, approved) {
+    setActioning(prev => ({ ...prev, [p.id]: true }))
+    const path = `community/${p.country}/${p.city}/posts/${p.id}`
+    await update(ref(db, path), { approved })
+    setActioning(prev => ({ ...prev, [p.id]: false }))
+  }
+
+  if (!isFirebaseConfigured) {
+    return (
+      <div className="bg-fifa-card border border-dashed border-fifa-border rounded-xl p-6 text-center">
+        <WifiOff className="w-8 h-8 text-gray-700 mx-auto mb-2" />
+        <p className="text-gray-500 text-sm">Firebase no configurado — la comunidad no está activa.</p>
+      </div>
+    )
+  }
+
+  if (loadingMod) return <div className="flex justify-center py-8"><Loader className="w-6 h-6 text-fifa-gold animate-spin" /></div>
+
+  if (pending.length === 0) {
+    return (
+      <div className="bg-fifa-card border border-green-500/20 rounded-xl p-6 text-center">
+        <CheckCircle className="w-8 h-8 text-green-400 mx-auto mb-2" />
+        <p className="text-gray-400 text-sm">No hay publicaciones pendientes de moderación.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-gray-500">{pending.length} publicación{pending.length !== 1 ? 'es' : ''} pendiente{pending.length !== 1 ? 's' : ''} de aprobación</p>
+      {pending.map(p => (
+        <div key={p.id} className="bg-fifa-card border border-yellow-500/30 rounded-xl p-4">
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <div>
+              <p className="text-xs text-gray-500 mb-1">
+                <span className="text-gray-300">{p.country.toUpperCase()}</span> · {p.city?.replace(/_/g, ' ')}
+              </p>
+              <p className="text-white text-sm font-semibold">{p.lugar}</p>
+              {p.fecha && <p className="text-fifa-gold text-xs">📅 {p.fecha}</p>}
+              {p.mensaje && <p className="text-gray-400 text-xs mt-1">{p.mensaje}</p>}
+              {p.contacto && <p className="text-green-400 text-xs mt-1">{p.contacto}</p>}
+              <p className="text-gray-600 text-xs mt-1">por: {p.autorNombre || 'Anónimo'}</p>
+            </div>
+            <div className="flex gap-1.5 shrink-0">
+              <button
+                onClick={() => approve(p, true)}
+                disabled={actioning[p.id]}
+                className="flex items-center gap-1 px-3 py-1.5 bg-green-600/20 border border-green-500/40 text-green-400 text-xs font-semibold rounded-lg hover:bg-green-600/30 disabled:opacity-40 transition-colors"
+              >
+                {actioning[p.id] ? <Loader className="w-3 h-3 animate-spin" /> : <ThumbsUp className="w-3.5 h-3.5" />}
+                Aprobar
+              </button>
+              <button
+                onClick={() => approve(p, false)}
+                disabled={actioning[p.id]}
+                className="flex items-center gap-1 px-3 py-1.5 bg-red-600/20 border border-red-500/40 text-red-400 text-xs font-semibold rounded-lg hover:bg-red-600/30 disabled:opacity-40 transition-colors"
+              >
+                <ThumbsDown className="w-3.5 h-3.5" />
+                Rechazar
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
   )
 }
 
@@ -96,12 +191,12 @@ export default function DevDashboard({ onLogout }) {
   }
 
   const moduleIcons = {
-    module_album: { icon: BookOpen, label: 'Álbum' },
-    module_calendar: { icon: Calendar, label: 'Calendario' },
-    module_standings: { icon: BarChart2, label: 'Posiciones' },
-    module_store: { icon: ShoppingCart, label: 'Tienda' },
-    pwa_install: { icon: Smartphone, label: 'Instalaciones PWA' },
-    session: { icon: Users, label: 'Sesiones totales' },
+    module_album:     { icon: BookOpen,       label: 'Álbum' },
+    module_calendar:  { icon: Calendar,       label: 'Calendario' },
+    module_standings: { icon: BarChart2,      label: 'Posiciones' },
+    module_community: { icon: MessageCircle,  label: 'Comunidad' },
+    pwa_install:      { icon: Smartphone,     label: 'Instalaciones PWA' },
+    session:          { icon: Users,          label: 'Sesiones totales' },
   }
 
   // Last 7 days from GitHub
@@ -321,7 +416,13 @@ export default function DevDashboard({ onLogout }) {
           )}
         </section>
 
-        {/* ── SECCIÓN 3: INFO TÉCNICA ───────────────────────── */}
+        {/* ── SECCIÓN 3: MODERACIÓN COMUNIDAD ──────────────── */}
+        <section>
+          <SectionTitle><MessageCircle className="w-4 h-4 text-yellow-400" /> Moderación — Publicaciones Pendientes</SectionTitle>
+          <ModerationPanel />
+        </section>
+
+        {/* ── SECCIÓN 4: INFO TÉCNICA ───────────────────────── */}
         <section>
           <SectionTitle><Settings className="w-4 h-4 text-gray-400" /> Información Técnica</SectionTitle>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
