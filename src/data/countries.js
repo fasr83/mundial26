@@ -518,47 +518,77 @@ const COUNTRIES_RAW = [
   },
 ]
 
-// 20 láminas de introducción (estadios + páginas especiales)
+// ── ESTRUCTURA OFICIAL PANINI FIFA WORLD CUP 2026 ─────────────────
+// 00 (portada) + FWC 1–FWC 8 (intro) + 48 equipos × 20 + FWC 9–FWC 19 (historia) = 980
+// Bonus (no cuentan en 980): CC 1–CC 14 (Coca-Cola)
+
+// Sección intro: 00 + FWC 1–FWC 8 = 9 láminas
 export const INTRO_STICKERS = [
-  { number: 1,  type: 'cover',   description: 'Portada Oficial — FIFA World Cup 2026™',     special: true  },
-  { number: 2,  type: 'intro',   description: 'Logo Oficial y Mascota "Striker"',            special: true  },
-  { number: 3,  type: 'intro',   description: 'Trofeo Copa del Mundo FIFA™',                special: true  },
-  { number: 4,  type: 'intro',   description: 'Historia de la Copa del Mundo FIFA™',        special: false },
-  { number: 5,  type: 'intro',   description: 'Camino a la Copa / Clasificatorias',         special: false },
-  { number: 6,  type: 'intro',   description: 'Récords y Estadísticas Históricas',          special: false },
-  { number: 7,  type: 'stadium', description: 'MetLife Stadium — East Rutherford (Final)',  special: false },
-  { number: 8,  type: 'stadium', description: 'Estadio Azteca — Ciudad de México',         special: false },
-  { number: 9,  type: 'stadium', description: 'Rose Bowl — Los Ángeles',                   special: false },
-  { number: 10, type: 'stadium', description: 'AT&T Stadium — Dallas/Arlington',           special: false },
-  { number: 11, type: 'stadium', description: 'Hard Rock Stadium — Miami',                 special: false },
-  { number: 12, type: 'stadium', description: 'Gillette Stadium — Boston',                 special: false },
-  { number: 13, type: 'stadium', description: 'Lumen Field — Seattle',                     special: false },
-  { number: 14, type: 'stadium', description: 'Mercedes-Benz Stadium — Atlanta',           special: false },
-  { number: 15, type: 'stadium', description: 'Arrowhead Stadium — Kansas City',           special: false },
-  { number: 16, type: 'stadium', description: 'Allegiant Stadium — Las Vegas',             special: false },
-  { number: 17, type: 'stadium', description: 'BC Place — Vancouver',                      special: false },
-  { number: 18, type: 'stadium', description: 'BMO Field — Toronto',                       special: false },
-  { number: 19, type: 'stadium', description: 'Estadio BBVA — Guadalupe / Monterrey',      special: false },
-  { number: 20, type: 'stadium', description: 'Estadio Akron — Guadalajara',               special: false },
+  { number: 0,  code: '00',    type: 'cover',   description: 'Portada Oficial — FIFA World Cup 2026™',    special: true  },
+  { number: 1,  code: 'FWC 1', type: 'intro',   description: 'Bienvenida al Mundial 2026',                special: true  },
+  { number: 2,  code: 'FWC 2', type: 'intro',   description: 'Logo Oficial y Mascota "Striker"',          special: true  },
+  { number: 3,  code: 'FWC 3', type: 'intro',   description: 'Trofeo Copa del Mundo FIFA™',               special: true  },
+  { number: 4,  code: 'FWC 4', type: 'stadium', description: 'MetLife Stadium — East Rutherford (Final)', special: false },
+  { number: 5,  code: 'FWC 5', type: 'stadium', description: 'Estadio Azteca — Ciudad de México',        special: false },
+  { number: 6,  code: 'FWC 6', type: 'stadium', description: 'Rose Bowl — Los Ángeles',                  special: false },
+  { number: 7,  code: 'FWC 7', type: 'stadium', description: 'AT&T Stadium — Dallas/Arlington',          special: false },
+  { number: 8,  code: 'FWC 8', type: 'stadium', description: 'Hard Rock Stadium — Miami',                special: false },
+]
+
+// Sección historia: FWC 9–FWC 19 = 11 láminas (van AL FINAL del álbum)
+export const HISTORY_STICKERS = [
+  { number: 969, code: 'FWC 9',  type: 'history', description: 'FIFA World Cup History — 1930–1950',  special: false },
+  { number: 970, code: 'FWC 10', type: 'history', description: 'FIFA World Cup History — 1954–1966',  special: false },
+  { number: 971, code: 'FWC 11', type: 'history', description: 'FIFA World Cup History — 1970–1978',  special: false },
+  { number: 972, code: 'FWC 12', type: 'history', description: 'FIFA World Cup History — 1982–1990',  special: false },
+  { number: 973, code: 'FWC 13', type: 'history', description: 'FIFA World Cup History — 1994–1998',  special: false },
+  { number: 974, code: 'FWC 14', type: 'history', description: 'FIFA World Cup History — 2002–2006',  special: false },
+  { number: 975, code: 'FWC 15', type: 'history', description: 'FIFA World Cup History — 2010–2014',  special: false },
+  { number: 976, code: 'FWC 16', type: 'history', description: 'FIFA World Cup History — 2018–2022',  special: false },
+  { number: 977, code: 'FWC 17', type: 'history', description: 'Leyendas del Fútbol Mundial',         special: true  },
+  { number: 978, code: 'FWC 18', type: 'history', description: 'Balones Históricos del Mundial',      special: false },
+  { number: 979, code: 'FWC 19', type: 'history', description: 'Sede — USA · Canadá · México 2026',   special: false },
+]
+
+// Bonus Coca-Cola (no cuentan en el total de 980)
+export const COCACOLA_STICKERS = [
+  { number: 980, code: 'CC 1',  type: 'bonus', description: 'Coca-Cola — Momento Mundial 1',  special: false },
+  { number: 981, code: 'CC 2',  type: 'bonus', description: 'Coca-Cola — Momento Mundial 2',  special: false },
+  { number: 982, code: 'CC 3',  type: 'bonus', description: 'Coca-Cola — Momento Mundial 3',  special: false },
+  { number: 983, code: 'CC 4',  type: 'bonus', description: 'Coca-Cola — Momento Mundial 4',  special: false },
+  { number: 984, code: 'CC 5',  type: 'bonus', description: 'Coca-Cola — Momento Mundial 5',  special: false },
+  { number: 985, code: 'CC 6',  type: 'bonus', description: 'Coca-Cola — Momento Mundial 6',  special: false },
+  { number: 986, code: 'CC 7',  type: 'bonus', description: 'Coca-Cola — Momento Mundial 7',  special: false },
+  { number: 987, code: 'CC 8',  type: 'bonus', description: 'Coca-Cola — Momento Mundial 8',  special: false },
+  { number: 988, code: 'CC 9',  type: 'bonus', description: 'Coca-Cola — Momento Mundial 9',  special: false },
+  { number: 989, code: 'CC 10', type: 'bonus', description: 'Coca-Cola — Momento Mundial 10', special: false },
+  { number: 990, code: 'CC 11', type: 'bonus', description: 'Coca-Cola — Momento Mundial 11', special: false },
+  { number: 991, code: 'CC 12', type: 'bonus', description: 'Coca-Cola — Momento Mundial 12', special: false },
+  { number: 992, code: 'CC 13', type: 'bonus', description: 'Coca-Cola — Momento Mundial 13', special: false },
+  { number: 993, code: 'CC 14', type: 'bonus', description: 'Coca-Cola — Momento Mundial 14', special: false },
 ]
 
 const STICKERS_PER_COUNTRY = 20 // 1 escudo (foil) + 1 foto grupal + 18 retratos
-let nextNum = INTRO_STICKERS.length + 1
+// Equipos empiezan en número 9 (después de 00 + FWC1-FWC8)
+let nextNum = INTRO_STICKERS.length
 
 export const COUNTRIES = COUNTRIES_RAW.map((country) => {
+  const code = country.id.toUpperCase()
   const stickers = []
+  let pos = 1
 
   stickers.push({
-    number: nextNum++, type: 'badge',
+    number: nextNum++, code: `${code} ${pos++}`, type: 'badge',
     description: `Escudo — ${country.name}`, special: true,
   })
   stickers.push({
-    number: nextNum++, type: 'team',
+    number: nextNum++, code: `${code} ${pos++}`, type: 'team',
     description: `Foto Grupal — ${country.name}`, special: false,
   })
   country.players.forEach((player) => {
     stickers.push({
-      number: nextNum++, type: 'player', description: player, special: false,
+      number: nextNum++, code: `${code} ${pos++}`, type: 'player',
+      description: player, special: false,
     })
   })
 
@@ -567,15 +597,18 @@ export const COUNTRIES = COUNTRIES_RAW.map((country) => {
     stickers,
     stickerStart: stickers[0].number,
     stickerEnd: stickers[stickers.length - 1].number,
+    stickerCode: code,
   }
 })
 
-// 20 intro + 48 × 20 = 20 + 960 = 980
-export const TOTAL_STICKERS = INTRO_STICKERS.length + COUNTRIES.length * STICKERS_PER_COUNTRY
+// 9 (intro) + 48×20 (equipos) + 11 (historia) = 980
+export const TOTAL_STICKERS = INTRO_STICKERS.length + COUNTRIES.length * STICKERS_PER_COUNTRY + HISTORY_STICKERS.length
 
 export const ALL_STICKERS = [
   ...INTRO_STICKERS.map((s) => ({ ...s, countryId: 'intro', countryName: 'Introducción' })),
   ...COUNTRIES.flatMap((c) =>
     c.stickers.map((s) => ({ ...s, countryId: c.id, countryName: c.name, flag: c.flag }))
   ),
+  ...HISTORY_STICKERS.map((s) => ({ ...s, countryId: 'history', countryName: 'Historia Mundial' })),
+  ...COCACOLA_STICKERS.map((s) => ({ ...s, countryId: 'bonus', countryName: 'Coca-Cola Bonus' })),
 ]

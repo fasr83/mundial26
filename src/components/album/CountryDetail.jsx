@@ -25,7 +25,7 @@ export default function CountryDetail({ country, stickerStatus, onToggle, onBack
       const st = stickerStatus[s.number] || 'missing'
       if (filter !== 'all' && st !== filter) return false
       if (search && !s.description.toLowerCase().includes(search.toLowerCase()) &&
-          !String(s.number).includes(search)) return false
+          !s.code.toLowerCase().includes(search.toLowerCase())) return false
       return true
     })
   }, [country.stickers, stickerStatus, filter, search])
@@ -58,7 +58,7 @@ export default function CountryDetail({ country, stickerStatus, onToggle, onBack
                   </span>
                   <span className="text-xs text-gray-500">{country.confederation}</span>
                   <span className="text-xs text-gray-500">
-                    Stickers #{country.stickerStart}–{country.stickerEnd}
+                    {country.stickerCode} 1 – {country.stickerCode} 20
                   </span>
                 </div>
               </div>

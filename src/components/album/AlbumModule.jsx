@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { Search, Filter, RotateCcw, Star } from 'lucide-react'
 import { useLocalStorage } from '../../hooks/useLocalStorage'
-import { COUNTRIES, INTRO_STICKERS, CONFEDERATIONS, TOTAL_STICKERS } from '../../data/countries'
+import { COUNTRIES, INTRO_STICKERS, HISTORY_STICKERS, COCACOLA_STICKERS, CONFEDERATIONS, TOTAL_STICKERS } from '../../data/countries'
 import CountryGrid from './CountryGrid'
 import CountryDetail from './CountryDetail'
 import GlobalSummary from './GlobalSummary'
@@ -98,20 +98,28 @@ export default function AlbumModule() {
             className="w-full card p-3 flex items-center gap-2 hover:border-fifa-gold/50 transition-colors text-sm"
           >
             <Star className="w-4 h-4 text-fifa-gold" />
-            <span className="text-gray-300">Stickers Introducción</span>
-            <span className="ml-auto text-xs text-gray-600">#{INTRO_STICKERS[0].number}–#{INTRO_STICKERS[INTRO_STICKERS.length - 1].number}</span>
+            <span className="text-gray-300">Stickers Especiales</span>
+            <span className="ml-auto text-xs text-gray-600">00 · FWC 1–19 · CC 1–14</span>
           </button>
 
           {showIntro && (
-            <div className="card p-3 animate-fade-in">
+            <div className="card p-3 animate-fade-in space-y-3">
+              <p className="text-[10px] text-gray-600 uppercase tracking-wider">Introducción</p>
               <div className="grid grid-cols-5 gap-1.5">
                 {INTRO_STICKERS.map((s) => (
-                  <IntroStickerMini
-                    key={s.number}
-                    sticker={s}
-                    status={stickerStatus[s.number] || 'missing'}
-                    onToggle={handleIntroToggle}
-                  />
+                  <IntroStickerMini key={s.number} sticker={s} status={stickerStatus[s.number] || 'missing'} onToggle={handleIntroToggle} />
+                ))}
+              </div>
+              <p className="text-[10px] text-gray-600 uppercase tracking-wider">Historia del Mundial</p>
+              <div className="grid grid-cols-5 gap-1.5">
+                {HISTORY_STICKERS.map((s) => (
+                  <IntroStickerMini key={s.number} sticker={s} status={stickerStatus[s.number] || 'missing'} onToggle={handleIntroToggle} />
+                ))}
+              </div>
+              <p className="text-[10px] text-gray-600 uppercase tracking-wider">Coca-Cola Bonus</p>
+              <div className="grid grid-cols-5 gap-1.5">
+                {COCACOLA_STICKERS.map((s) => (
+                  <IntroStickerMini key={s.number} sticker={s} status={stickerStatus[s.number] || 'missing'} onToggle={handleIntroToggle} />
                 ))}
               </div>
             </div>
@@ -229,7 +237,7 @@ function IntroStickerMini({ sticker, status, onToggle }) {
       `}
       title={sticker.description}
     >
-      <span>#{sticker.number}</span>
+      <span>{sticker.code}</span>
       {isGot && <span>✓</span>}
       {isRepeated && <span>↻</span>}
     </button>

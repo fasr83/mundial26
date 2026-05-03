@@ -49,7 +49,7 @@ export default function StickerCard({ sticker, status, onToggle }) {
         ${isMissing && sticker.special ? 'sticker-missing bg-fifa-card' : ''}
         ${!isMissing ? 'bg-fifa-card2' : 'bg-fifa-card'}
       `}
-      title={`#${sticker.number} — ${sticker.description}${'\n'}Clic = Conseguido | Doble clic = Repetido`}
+      title={`${sticker.code} — ${sticker.description}${'\n'}Clic = Conseguido | Doble clic = Repetido`}
     >
       {/* Special foil indicator */}
       {sticker.special && (
@@ -59,8 +59,8 @@ export default function StickerCard({ sticker, status, onToggle }) {
       )}
 
       {/* Number */}
-      <span className={`text-[10px] font-bold tabular-nums ${sticker.special ? 'text-yellow-400' : 'text-gray-500'}`}>
-        #{sticker.number}
+      <span className={`text-[10px] font-bold tabular-nums leading-none text-center ${sticker.special ? 'text-yellow-400' : 'text-gray-500'}`}>
+        {sticker.code}
       </span>
 
       {/* Icon */}
