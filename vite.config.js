@@ -7,11 +7,11 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon-192.svg', 'icon-512.svg'],
+      includeAssets: ['icon-192.png', 'icon-512.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'MUNDIAL26 — Mi Álbum Panini',
         short_name: 'MUNDIAL26',
-        description: 'Álbum Panini FIFA World Cup 2026 · Calendrio · Tabla de Posiciones',
+        description: 'Álbum Panini FIFA World Cup 2026 · Calendario · Tabla de Posiciones',
         theme_color: '#080E1C',
         background_color: '#080E1C',
         display: 'standalone',
@@ -20,21 +20,21 @@ export default defineConfig({
         start_url: '/mundial26/',
         icons: [
           {
-            src: 'icon-192.svg',
+            src: 'icon-192.png',
             sizes: '192x192',
-            type: 'image/svg+xml',
-            purpose: 'any maskable',
+            type: 'image/png',
+            purpose: 'any',
           },
           {
-            src: 'icon-512.svg',
+            src: 'icon-512.png',
             sizes: '512x512',
-            type: 'image/svg+xml',
+            type: 'image/png',
             purpose: 'any maskable',
           },
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        globPatterns: ['**/*.{js,css,html,png,svg,ico,woff2}'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

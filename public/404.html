@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script>
+    // Redirige al root de la SPA preservando la ruta
+    const path = window.location.pathname.replace('/mundial26', '') || '/';
+    window.location.replace('/mundial26/' + window.location.search + window.location.hash);
+  </script>
+</head>
+<body></body>
+</html>
