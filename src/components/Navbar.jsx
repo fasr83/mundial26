@@ -9,7 +9,7 @@ const TABS = [
 
 export default function Navbar({ activeModule, setActiveModule, onLogoClick }) {
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-fifa-darker/95 backdrop-blur-md border-b border-fifa-border">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-fifa-darker/95 backdrop-blur-md border-b border-fifa-border" style={{paddingTop: 'env(safe-area-inset-top)'}}>
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo — 7 clicks abre panel dev */}
         <div className="flex items-center gap-3 cursor-pointer select-none" onClick={onLogoClick}>

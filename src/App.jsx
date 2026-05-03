@@ -55,7 +55,7 @@ export default function App() {
         setActiveModule={setActiveModule}
         onLogoClick={handleLogoClick}
       />
-      <main className="pt-16">
+      <main style={{paddingTop: 'calc(env(safe-area-inset-top) + 4rem)'}}>
         {activeModule === 'album'     && <AlbumModule />}
         {activeModule === 'calendar'  && <CalendarModule />}
         {activeModule === 'standings' && <StandingsModule />}
