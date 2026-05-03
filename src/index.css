@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    background-color: #080E1C;
+    color: white;
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #040810;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1E2D4A;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #FFD700;
+  }
+}
+
+@layer components {
+  .btn-gold {
+    @apply bg-fifa-gold text-black font-bold px-4 py-2 rounded-lg hover:brightness-110 active:scale-95 transition-all duration-150 text-sm;
+  }
+  .btn-outline {
+    @apply border border-fifa-border text-gray-300 px-4 py-2 rounded-lg hover:border-fifa-gold hover:text-fifa-gold transition-all duration-150 text-sm;
+  }
+  .card {
+    @apply bg-fifa-card border border-fifa-border rounded-xl;
+  }
+  .shimmer-bg {
+    background: linear-gradient(90deg, #0F1828 25%, #131F35 50%, #0F1828 75%);
+    background-size: 1000px 100%;
+    animation: shimmer 1.5s infinite;
+  }
+  .sticker-got {
+    @apply ring-2 ring-green-400 bg-green-900/20;
+  }
+  .sticker-repeated {
+    @apply ring-2 ring-yellow-400 bg-yellow-900/20;
+  }
+  .sticker-missing {
+    @apply opacity-40;
+  }
+  .foil-badge {
+    background: linear-gradient(135deg, #FFD700, #FFA500, #FFD700, #FF8C00, #FFD700);
+    background-size: 200% 200%;
+    animation: shimmer 2s infinite;
+  }
+  .progress-bar {
+    @apply h-2 rounded-full bg-fifa-border overflow-hidden;
+  }
+  .progress-fill {
+    @apply h-full rounded-full transition-all duration-700 ease-out;
+    background: linear-gradient(90deg, #FFD700, #FFA500);
+  }
+  .tab-active {
+    @apply bg-fifa-gold text-black font-bold;
+  }
+  .tab-inactive {
+    @apply text-gray-400 hover:text-white hover:bg-fifa-card2;
+  }
+  .match-today {
+    @apply ring-2 ring-fifa-gold animate-pulse-gold;
+  }
+  .group-badge {
+    @apply text-xs font-bold px-2 py-0.5 rounded-full;
+  }
+}
+
+@layer utilities {
+  .text-gradient-gold {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .text-gradient-red {
+    background: linear-gradient(135deg, #CC0000, #FF4444);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .bg-gradient-stadium {
+    background: linear-gradient(180deg, #080E1C 0%, #0A1628 50%, #080E1C 100%);
+  }
+  .border-gradient {
+    border-image: linear-gradient(135deg, #FFD700, #CC0000) 1;
+  }
+}
