@@ -32,15 +32,13 @@ export default function StickerCard({ sticker, status = 0, onToggle }) {
   const handleClick = () => {
     clearTimeout(clickTimer.current)
     clickTimer.current = setTimeout(() => {
-      if (status === 0) onToggle(sticker.number, 1)
-      else if (status === 1) onToggle(sticker.number, 0)
-      else onToggle(sticker.number, status - 1) // reduce extras (min 1)
+      onToggle(sticker.number, status + 1) // siempre suma 1 copia
     }, 220)
   }
 
   const handleDoubleClick = () => {
     clearTimeout(clickTimer.current)
-    onToggle(sticker.number, Math.max(2, status + 1)) // add extra copy
+    onToggle(sticker.number, Math.max(0, status - 1)) // resta 1 (para intercambios)
   }
 
   return (
@@ -56,7 +54,7 @@ export default function StickerCard({ sticker, status = 0, onToggle }) {
         ${isRepeated ? 'sticker-repeated' : ''}
         ${isMissing ? 'sticker-missing bg-fifa-card' : 'bg-fifa-card2'}
       `}
-      title={`${sticker.code} — ${sticker.description}\nClic = Conseguido/Quitar | Doble clic = +Repetido`}
+      title={`${sticker.code} — ${sticker.description}\nClic = +1 copia | Doble clic = -1 copia`}
     >
       {/* Special star */}
       {sticker.special && (
@@ -65,15 +63,8 @@ export default function StickerCard({ sticker, status = 0, onToggle }) {
         </div>
       )}
 
-      {/* Extras badge — top-left */}
-      {extras > 0 && (
-        <div className="absolute -top-1.5 -left-1.5 bg-yellow-400 text-black text-[8px] font-black rounded-full w-4 h-4 flex items-center justify-center border border-black/20 z-10 shadow">
-          +{extras}
-        </div>
-      )}
-
       {/* Sticker code */}
-      <span className={`text-[10px] font-bold tabular-nums leading-none text-center ${sticker.special ? 'text-yellow-300' : 'text-white'}`}>
+      <span className={`text-[12px] font-bold tabular-nums leading-none text-center z-10 ${sticker.special ? 'text-yellow-300' : 'text-white'}`}>
         {sticker.code}
       </span>
 
@@ -97,8 +88,18 @@ export default function StickerCard({ sticker, status = 0, onToggle }) {
         </div>
       )}
 
+      {/* Repeated overlay — shows total copies prominently */}
+      {isRepeated && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-8 h-8 rounded-full bg-yellow-400 flex flex-col items-center justify-center shadow-lg shadow-yellow-500/40">
+            <span className="text-black font-black text-[13px] leading-none">{status}</span>
+            <span className="text-black/60 text-[7px] leading-none font-bold">×</span>
+          </div>
+        </div>
+      )}
+
       {/* Type label */}
-      <span className="text-[9px] text-gray-600 truncate w-full text-center leading-none">
+      <span className="text-[10px] text-gray-500 truncate w-full text-center leading-none z-10">
         {TYPE_LABELS[sticker.type] || sticker.type}
       </span>
     </div>

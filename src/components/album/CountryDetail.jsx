@@ -141,7 +141,7 @@ export default function CountryDetail({ country, stickerStatus, onToggle, onBack
 
         {/* Tip */}
         <p className="text-center text-xs text-gray-700 mt-6">
-          Clic = Conseguido · Clic en conseguido = Quitar · Doble clic = +Repetido
+          Clic = +1 copia · Doble clic = -1 copia (intercambiar)
         </p>
       </div>
     </div>

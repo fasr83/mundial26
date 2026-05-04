@@ -228,15 +228,13 @@ function IntroStickerMini({ sticker, status = 0, onToggle }) {
   const handleClick = () => {
     clearTimeout(clickTimer.current)
     clickTimer.current = setTimeout(() => {
-      if (status === 0) onToggle(sticker.number, 1)
-      else if (status === 1) onToggle(sticker.number, 0)
-      else onToggle(sticker.number, status - 1)
+      onToggle(sticker.number, status + 1)
     }, 220)
   }
 
   const handleDoubleClick = () => {
     clearTimeout(clickTimer.current)
-    onToggle(sticker.number, Math.max(2, status + 1))
+    onToggle(sticker.number, Math.max(0, status - 1))
   }
 
   return (
