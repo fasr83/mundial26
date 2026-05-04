@@ -1,12 +1,12 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { Search, Filter, RotateCcw, Star } from 'lucide-react'
 import { useLocalStorage } from '../../hooks/useLocalStorage'
 import { COUNTRIES, INTRO_STICKERS, HISTORY_STICKERS, COCACOLA_STICKERS, CONFEDERATIONS, TOTAL_STICKERS } from '../../data/countries'
 import CountryGrid from './CountryGrid'
 import CountryDetail from './CountryDetail'
 import GlobalSummary from './GlobalSummary'
+import WorldCupCountdown from './Countdown'
 
-// Confetti burst on 100%
 function triggerConfetti() {
   const colors = ['#FFD700', '#CC0000', '#003087', '#fff', '#FFA500']
   const container = document.createElement('div')
@@ -39,22 +39,33 @@ export default function AlbumModule() {
   const [selectedConf, setSelectedConf] = useState('')
   const [showIntro, setShowIntro] = useState(false)
 
+  // Migrate old string-based data ('got'/'repeated'/'missing') to numeric counts
+  useEffect(() => {
+    setStickerStatus((prev) => {
+      const needsMigration = Object.values(prev).some((v) => typeof v === 'string')
+      if (!needsMigration) return prev
+      const migrated = {}
+      for (const [key, val] of Object.entries(prev)) {
+        migrated[key] = val === 'got' ? 1 : val === 'repeated' ? 2 : 0
+      }
+      return migrated
+    })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   const selectedCountry = useMemo(
     () => COUNTRIES.find((c) => c.id === selectedCountryId),
     [selectedCountryId]
   )
 
-  const handleToggle = useCallback((stickerNum, newStatus) => {
+  const handleToggle = useCallback((stickerNum, newCount) => {
     setStickerStatus((prev) => {
-      const updated = { ...prev, [stickerNum]: newStatus }
+      const updated = { ...prev, [stickerNum]: newCount }
 
-      // Check if country just completed
-      const sticker = COUNTRIES.flatMap((c) => c.stickers).find((s) => s.number === stickerNum)
-      if (sticker && newStatus === 'got') {
+      if (newCount >= 1) {
         const country = COUNTRIES.find((c) => c.stickers.some((s) => s.number === stickerNum))
         if (country) {
           const allGot = country.stickers.every(
-            (s) => (s.number === stickerNum ? newStatus : prev[s.number]) === 'got'
+            (s) => (s.number === stickerNum ? newCount : (prev[s.number] || 0)) >= 1
           )
           if (allGot) triggerConfetti()
         }
@@ -67,11 +78,6 @@ export default function AlbumModule() {
     if (window.confirm('¿Resetear todo el álbum? Se perderá el progreso guardado.')) {
       setStickerStatus({})
     }
-  }
-
-  // Intro sticker toggle handler
-  const handleIntroToggle = (num, status) => {
-    setStickerStatus((prev) => ({ ...prev, [num]: status }))
   }
 
   if (selectedCountry) {
@@ -90,6 +96,7 @@ export default function AlbumModule() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar */}
         <div className="lg:col-span-1 space-y-4">
+          <WorldCupCountdown />
           <GlobalSummary stickerStatus={stickerStatus} />
 
           {/* Intro section toggle */}
@@ -107,19 +114,19 @@ export default function AlbumModule() {
               <p className="text-[10px] text-gray-600 uppercase tracking-wider">Introducción</p>
               <div className="grid grid-cols-5 gap-1.5">
                 {INTRO_STICKERS.map((s) => (
-                  <IntroStickerMini key={s.number} sticker={s} status={stickerStatus[s.number] || 'missing'} onToggle={handleIntroToggle} />
+                  <IntroStickerMini key={s.number} sticker={s} status={stickerStatus[s.number] || 0} onToggle={handleToggle} />
                 ))}
               </div>
               <p className="text-[10px] text-gray-600 uppercase tracking-wider">Historia del Mundial</p>
               <div className="grid grid-cols-5 gap-1.5">
                 {HISTORY_STICKERS.map((s) => (
-                  <IntroStickerMini key={s.number} sticker={s} status={stickerStatus[s.number] || 'missing'} onToggle={handleIntroToggle} />
+                  <IntroStickerMini key={s.number} sticker={s} status={stickerStatus[s.number] || 0} onToggle={handleToggle} />
                 ))}
               </div>
               <p className="text-[10px] text-gray-600 uppercase tracking-wider">Coca-Cola Bonus</p>
               <div className="grid grid-cols-5 gap-1.5">
                 {COCACOLA_STICKERS.map((s) => (
-                  <IntroStickerMini key={s.number} sticker={s} status={stickerStatus[s.number] || 'missing'} onToggle={handleIntroToggle} />
+                  <IntroStickerMini key={s.number} sticker={s} status={stickerStatus[s.number] || 0} onToggle={handleToggle} />
                 ))}
               </div>
             </div>
@@ -137,7 +144,6 @@ export default function AlbumModule() {
 
         {/* Main content */}
         <div className="lg:col-span-3">
-          {/* Page title */}
           <div className="mb-6">
             <h1 className="font-display text-4xl text-gradient-gold tracking-wider">
               ÁLBUM PANINI
@@ -147,7 +153,6 @@ export default function AlbumModule() {
 
           {/* Filters row */}
           <div className="flex flex-wrap gap-2 mb-4 items-center">
-            {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
               <input
@@ -159,7 +164,6 @@ export default function AlbumModule() {
               />
             </div>
 
-            {/* Status filter */}
             <div className="flex gap-1 bg-fifa-card border border-fifa-border rounded-xl p-1">
               {[
                 { value: 'all', label: 'Todos' },
@@ -179,7 +183,6 @@ export default function AlbumModule() {
               ))}
             </div>
 
-            {/* Confederation filter */}
             <div className="flex items-center gap-1">
               <Filter className="w-4 h-4 text-gray-500" />
               <select
@@ -188,7 +191,7 @@ export default function AlbumModule() {
                 className="bg-fifa-card border border-fifa-border rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-fifa-gold"
               >
                 <option value="">Todas las conf.</option>
-                {CONFEDERATIONS.filter(c => c !== 'Playoff').map((c) => (
+                {CONFEDERATIONS.filter((c) => c !== 'Playoff').map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
@@ -197,14 +200,13 @@ export default function AlbumModule() {
 
           {/* Groups legend */}
           <div className="flex flex-wrap gap-1.5 mb-4">
-            {['A','B','C','D','E','F','G','H','I','J','K','L'].map(g => (
+            {['A','B','C','D','E','F','G','H','I','J','K','L'].map((g) => (
               <span key={g} className="text-[10px] text-gray-500 bg-fifa-card border border-fifa-border rounded px-1.5 py-0.5">
                 G-{g}
               </span>
             ))}
           </div>
 
-          {/* Country grid */}
           <CountryGrid
             stickerStatus={stickerStatus}
             filter={filter}
@@ -218,28 +220,42 @@ export default function AlbumModule() {
   )
 }
 
-function IntroStickerMini({ sticker, status, onToggle }) {
-  const isGot = status === 'got'
-  const isRepeated = status === 'repeated'
+function IntroStickerMini({ sticker, status = 0, onToggle }) {
+  const clickTimer = useRef(null)
+  const isGot = status >= 1
+  const isRepeated = status >= 2
+
+  const handleClick = () => {
+    clearTimeout(clickTimer.current)
+    clickTimer.current = setTimeout(() => {
+      if (status === 0) onToggle(sticker.number, 1)
+      else if (status === 1) onToggle(sticker.number, 0)
+      else onToggle(sticker.number, status - 1)
+    }, 220)
+  }
+
+  const handleDoubleClick = () => {
+    clearTimeout(clickTimer.current)
+    onToggle(sticker.number, Math.max(2, status + 1))
+  }
+
   return (
     <button
-      onClick={(e) => {
-        if (e.detail === 2) onToggle(sticker.number, 'repeated')
-        else onToggle(sticker.number, status === 'got' ? 'missing' : 'got')
-      }}
+      onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
       className={`
         aspect-square rounded text-[10px] font-bold flex flex-col items-center justify-center gap-0.5 transition-all
         border hover:scale-105
-        ${isGot ? 'bg-green-900/30 border-green-500/50 text-green-400' : ''}
+        ${isGot && !isRepeated ? 'bg-green-900/30 border-green-500/50 text-green-400' : ''}
         ${isRepeated ? 'bg-yellow-900/30 border-yellow-500/50 text-yellow-400' : ''}
-        ${!isGot && !isRepeated ? 'bg-fifa-darker border-fifa-border text-gray-600' : ''}
+        ${!isGot && !isRepeated ? 'bg-fifa-darker border-fifa-border text-gray-400' : ''}
         ${sticker.special ? 'border-yellow-500/40' : ''}
       `}
       title={sticker.description}
     >
       <span>{sticker.code}</span>
-      {isGot && <span>✓</span>}
-      {isRepeated && <span>↻</span>}
+      {isGot && !isRepeated && <span>✓</span>}
+      {isRepeated && <span className="text-[8px]">+{status - 1}</span>}
     </button>
   )
 }

@@ -10,10 +10,10 @@ export default function CountryDetail({ country, stickerStatus, onToggle, onBack
   const stats = useMemo(() => {
     let got = 0, repeated = 0, missing = 0
     country.stickers.forEach((s) => {
-      const st = stickerStatus[s.number] || 'missing'
-      if (st === 'got') got++
-      else if (st === 'repeated') repeated++
-      else missing++
+      const count = stickerStatus[s.number] || 0
+      if (count === 0) missing++
+      else if (count === 1) got++
+      else { got++; repeated += count - 1 }
     })
     return { got, repeated, missing, total: country.stickers.length }
   }, [country.stickers, stickerStatus])
@@ -22,8 +22,10 @@ export default function CountryDetail({ country, stickerStatus, onToggle, onBack
 
   const filtered = useMemo(() => {
     return country.stickers.filter((s) => {
-      const st = stickerStatus[s.number] || 'missing'
-      if (filter !== 'all' && st !== filter) return false
+      const count = stickerStatus[s.number] || 0
+      if (filter === 'got' && count < 1) return false
+      if (filter === 'repeated' && count < 2) return false
+      if (filter === 'missing' && count !== 0) return false
       if (search && !s.description.toLowerCase().includes(search.toLowerCase()) &&
           !s.code.toLowerCase().includes(search.toLowerCase())) return false
       return true
@@ -67,7 +69,7 @@ export default function CountryDetail({ country, stickerStatus, onToggle, onBack
             {/* Mini stats */}
             <div className="flex gap-3 flex-wrap">
               <StatChip icon={<Check className="w-3.5 h-3.5" />} count={stats.got} label="Tengo" color="text-green-400" />
-              <StatChip icon={<RefreshCw className="w-3.5 h-3.5" />} count={stats.repeated} label="Repetidos" color="text-yellow-400" />
+              <StatChip icon={<RefreshCw className="w-3.5 h-3.5" />} count={stats.repeated} label="Extras" color="text-yellow-400" />
               <StatChip count={stats.missing} label="Faltan" color="text-gray-400" />
             </div>
           </div>
@@ -101,7 +103,7 @@ export default function CountryDetail({ country, stickerStatus, onToggle, onBack
                   : 'bg-fifa-card border border-fifa-border text-gray-400 hover:text-white'
               }`}
             >
-              {f === 'all' ? 'Todos' : f === 'got' ? '✓ Tengo' : f === 'repeated' ? '↻ Repetidos' : '○ Faltan'}
+              {f === 'all' ? 'Todos' : f === 'got' ? '✓ Tengo' : f === 'repeated' ? '↻ Extras' : '○ Faltan'}
             </button>
           ))}
 
@@ -130,7 +132,7 @@ export default function CountryDetail({ country, stickerStatus, onToggle, onBack
               <StickerCard
                 key={sticker.number}
                 sticker={sticker}
-                status={stickerStatus[sticker.number] || 'missing'}
+                status={stickerStatus[sticker.number] || 0}
                 onToggle={onToggle}
               />
             ))}
@@ -139,7 +141,7 @@ export default function CountryDetail({ country, stickerStatus, onToggle, onBack
 
         {/* Tip */}
         <p className="text-center text-xs text-gray-700 mt-6">
-          Clic = Conseguido · Doble clic = Repetido · Clic en conseguido = Quitar
+          Clic = Conseguido · Clic en conseguido = Quitar · Doble clic = +Repetido
         </p>
       </div>
     </div>
