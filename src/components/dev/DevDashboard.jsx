@@ -3,7 +3,8 @@ import {
   BarChart2, Users, Eye, Smartphone, Globe, TrendingUp,
   Key, RefreshCw, LogOut, Star, BookOpen, Calendar, MessageCircle,
   Wifi, WifiOff, Settings, CheckCircle, AlertCircle, ExternalLink,
-  ThumbsUp, ThumbsDown, Loader, Shield, ShieldOff, Ban
+  ThumbsUp, ThumbsDown, Loader, Shield, ShieldOff, Ban,
+  ChevronDown, ChevronUp, Send, AlertTriangle
 } from 'lucide-react'
 import { getTrackingData } from '../../hooks/useAppTracking'
 import { ref, onValue, update, set, remove } from 'firebase/database'
@@ -37,20 +38,20 @@ function BanPanel() {
   const [messages, setMessages] = useState([])
   const [banned, setBanned] = useState({})
   const [actioning, setActioning] = useState({})
+  const [selected, setSelected] = useState(null) // { uid, apodo }
+  const [warningText, setWarningText] = useState('')
+  const [sendingWarning, setSendingWarning] = useState(false)
 
   useEffect(() => {
     if (!isFirebaseConfigured || !db) return
-    const unsubMsg = onValue(
-      ref(db, 'chat/messages'),
-      snap => {
-        const data = snap.val() || {}
-        const list = Object.entries(data)
-          .map(([id, m]) => ({ id, ...m }))
-          .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
-          .slice(0, 30)
-        setMessages(list)
-      }
-    )
+    const unsubMsg = onValue(ref(db, 'chat/messages'), snap => {
+      const data = snap.val() || {}
+      const list = Object.entries(data)
+        .map(([id, m]) => ({ id, ...m }))
+        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+        .slice(0, 60)
+      setMessages(list)
+    })
     const unsubBan = onValue(ref(db, 'banned'), snap => setBanned(snap.val() || {}))
     return () => { unsubMsg(); unsubBan() }
   }, [])
@@ -67,32 +68,43 @@ function BanPanel() {
     setActioning(p => ({ ...p, [uid]: false }))
   }
 
+  async function sendWarning() {
+    if (!warningText.trim() || !selected) return
+    setSendingWarning(true)
+    await set(ref(db, `warnings/${selected.uid}`), { message: warningText.trim(), sentAt: Date.now() })
+    setWarningText('')
+    setSendingWarning(false)
+  }
+
+  function selectUser(uid, apodo) {
+    if (selected?.uid === uid) { setSelected(null); setWarningText(''); return }
+    setSelected({ uid, apodo })
+    setWarningText('')
+  }
+
   if (!isFirebaseConfigured) return null
 
   const bannedList = Object.entries(banned)
 
   return (
-    <div className="space-y-5">
-      {/* Usuarios baneados */}
+    <div className="space-y-4">
+      {/* Baneados activos */}
       {bannedList.length > 0 && (
-        <div>
+        <div className="bg-red-900/10 border border-red-900/30 rounded-xl p-3">
           <p className="text-xs text-red-400 uppercase tracking-wider mb-2 font-semibold">
-            {bannedList.length} usuario{bannedList.length !== 1 ? 's' : ''} baneado{bannedList.length !== 1 ? 's' : ''}
+            🚫 {bannedList.length} baneado{bannedList.length !== 1 ? 's' : ''}
           </p>
-          <div className="space-y-2">
+          <div className="flex flex-wrap gap-2">
             {bannedList.map(([uid, info]) => (
-              <div key={uid} className="bg-red-900/20 border border-red-900/40 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-red-300 text-sm font-semibold">{info.apodo || 'Anónimo'}</p>
-                  <p className="text-red-800 text-[10px] font-mono">{uid}</p>
-                </div>
+              <div key={uid} className="flex items-center gap-2 bg-red-900/20 border border-red-900/40 rounded-lg px-3 py-1.5">
+                <span className="text-red-300 text-xs font-semibold">{info.apodo || 'Anónimo'}</span>
                 <button
                   onClick={() => unbanUser(uid)}
                   disabled={actioning[uid]}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600/20 border border-green-500/40 text-green-400 text-xs font-semibold rounded-lg hover:bg-green-600/30 disabled:opacity-40 transition-colors"
+                  className="text-green-400 hover:text-green-300 disabled:opacity-40 transition-colors"
+                  title="Desbanear"
                 >
                   {actioning[uid] ? <Loader className="w-3 h-3 animate-spin" /> : <ShieldOff className="w-3 h-3" />}
-                  Desbanear
                 </button>
               </div>
             ))}
@@ -100,52 +112,105 @@ function BanPanel() {
         </div>
       )}
 
-      {/* Mensajes recientes del chat */}
+      {/* Lista de mensajes compacta y scrollable */}
       <div>
-        <p className="text-xs text-gray-500 uppercase tracking-wider mb-2 font-semibold">Mensajes recientes del chat</p>
+        <p className="text-xs text-gray-500 uppercase tracking-wider mb-2 font-semibold flex items-center gap-2">
+          <MessageCircle className="w-3.5 h-3.5" />
+          Mensajes recientes — clic para accionar
+        </p>
         {messages.length === 0 ? (
           <p className="text-gray-600 text-sm text-center py-6">No hay mensajes aún.</p>
         ) : (
-          <div className="space-y-2">
-            {messages.map(msg => {
-              const isBanned = !!banned[msg.uid]
-              return (
-                <div key={msg.id} className={`rounded-xl px-4 py-3 flex items-start justify-between gap-3 border ${
-                  isBanned ? 'bg-red-900/10 border-red-900/30' : 'bg-fifa-card border-fifa-border'
-                }`}>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold mb-0.5">
-                      <span className={isBanned ? 'text-red-500' : 'text-gray-300'}>{msg.apodo || 'Anónimo'}</span>
-                      {isBanned && <span className="text-red-700 ml-2">· BANEADO</span>}
-                    </p>
-                    <p className={`text-sm truncate ${isBanned ? 'text-gray-700 line-through' : 'text-gray-400'}`}>{msg.texto}</p>
-                    <p className="text-[10px] text-gray-700 font-mono mt-0.5">{msg.uid}</p>
-                  </div>
-                  {isBanned ? (
-                    <button
-                      onClick={() => unbanUser(msg.uid)}
-                      disabled={actioning[msg.uid]}
-                      className="flex items-center gap-1 px-2.5 py-1.5 bg-green-600/20 border border-green-500/40 text-green-400 text-xs rounded-lg hover:bg-green-600/30 disabled:opacity-40 shrink-0 transition-colors"
-                    >
-                      {actioning[msg.uid] ? <Loader className="w-3 h-3 animate-spin" /> : <ShieldOff className="w-3 h-3" />}
-                      Desbanear
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => banUser(msg.uid, msg.apodo)}
-                      disabled={actioning[msg.uid]}
-                      className="flex items-center gap-1 px-2.5 py-1.5 bg-red-600/20 border border-red-500/40 text-red-400 text-xs rounded-lg hover:bg-red-600/30 disabled:opacity-40 shrink-0 transition-colors"
-                    >
-                      {actioning[msg.uid] ? <Loader className="w-3 h-3 animate-spin" /> : <Ban className="w-3 h-3" />}
-                      Banear
-                    </button>
-                  )}
-                </div>
-              )
-            })}
+          <div className="border border-fifa-border rounded-xl overflow-hidden">
+            <div className="max-h-64 overflow-y-auto divide-y divide-fifa-border/50">
+              {messages.map(msg => {
+                const isBanned = !!banned[msg.uid]
+                const isSelected = selected?.uid === msg.uid
+                return (
+                  <button
+                    key={msg.id}
+                    onClick={() => selectUser(msg.uid, msg.apodo)}
+                    className={`w-full text-left px-3 py-2 flex items-center gap-2 transition-colors ${
+                      isSelected ? 'bg-fifa-gold/10 border-l-2 border-fifa-gold' :
+                      isBanned ? 'bg-red-900/10 opacity-60' : 'hover:bg-fifa-darker'
+                    }`}
+                  >
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                      isBanned ? 'bg-red-900/40 text-red-500' : 'bg-fifa-navy text-gray-400'
+                    }`}>
+                      {isBanned ? '🚫' : msg.apodo?.[0]?.toUpperCase() || '?'}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className={`text-xs font-semibold ${isBanned ? 'text-red-500 line-through' : 'text-gray-300'}`}>
+                        {msg.apodo || 'Anónimo'}
+                      </span>
+                      {msg.imagen && <span className="text-[10px] text-blue-400 ml-1">[img]</span>}
+                      <p className="text-[11px] text-gray-600 truncate">{msg.texto || '(imagen)'}</p>
+                    </div>
+                    {isBanned && <span className="text-[9px] text-red-700 shrink-0">BANEADO</span>}
+                  </button>
+                )
+              })}
+            </div>
           </div>
         )}
       </div>
+
+      {/* Panel de acción para usuario seleccionado */}
+      {selected && (
+        <div className="bg-fifa-card border border-fifa-gold/30 rounded-xl p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white text-sm font-semibold">{selected.apodo}</p>
+              <p className="text-gray-600 text-[10px] font-mono">{selected.uid}</p>
+            </div>
+            <div className="flex gap-2">
+              {banned[selected.uid] ? (
+                <button
+                  onClick={() => unbanUser(selected.uid)}
+                  disabled={actioning[selected.uid]}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600/20 border border-green-500/40 text-green-400 text-xs rounded-lg hover:bg-green-600/30 disabled:opacity-40 transition-colors"
+                >
+                  {actioning[selected.uid] ? <Loader className="w-3 h-3 animate-spin" /> : <ShieldOff className="w-3 h-3" />}
+                  Desbanear
+                </button>
+              ) : (
+                <button
+                  onClick={() => banUser(selected.uid, selected.apodo)}
+                  disabled={actioning[selected.uid]}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600/20 border border-red-500/40 text-red-400 text-xs rounded-lg hover:bg-red-600/30 disabled:opacity-40 transition-colors"
+                >
+                  {actioning[selected.uid] ? <Loader className="w-3 h-3 animate-spin" /> : <Ban className="w-3 h-3" />}
+                  Banear
+                </button>
+              )}
+            </div>
+          </div>
+          {/* Aviso interno */}
+          <div>
+            <p className="text-[10px] text-yellow-500 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3" /> Enviar aviso interno (aparece como popup al usuario)
+            </p>
+            <div className="flex gap-2">
+              <input
+                value={warningText}
+                onChange={e => setWarningText(e.target.value)}
+                placeholder="Ej: Tu comportamiento no es adecuado..."
+                maxLength={200}
+                className="flex-1 bg-fifa-darker border border-fifa-border rounded-lg px-3 py-2 text-sm text-white placeholder-gray-700 focus:outline-none focus:border-yellow-500"
+                onKeyDown={e => e.key === 'Enter' && sendWarning()}
+              />
+              <button
+                onClick={sendWarning}
+                disabled={!warningText.trim() || sendingWarning}
+                className="px-3 py-2 bg-yellow-600/20 border border-yellow-500/40 text-yellow-400 rounded-lg hover:bg-yellow-600/30 disabled:opacity-40 transition-colors shrink-0"
+              >
+                {sendingWarning ? <Loader className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -250,6 +315,8 @@ export default function DevDashboard({ onLogout }) {
   const [ghError, setGhError] = useState('')
   const [loading, setLoading] = useState(false)
   const [localData, setLocalData] = useState({})
+  const [showDailyChart, setShowDailyChart] = useState(false)
+  const [showLocalDaily, setShowLocalDaily] = useState(false)
 
   useEffect(() => {
     setLocalData(getTrackingData())
@@ -431,31 +498,49 @@ export default function DevDashboard({ onLogout }) {
                 <StatCard icon={Globe} label="Fuentes de tráfico" value={ghData.referrers?.length || 0} sub="sitios referidores" color="text-purple-400" />
               </div>
 
-              {/* Daily chart (text bars) */}
+              {/* Daily chart (text bars) — collapsible */}
               {last7Days.length > 0 && (
-                <div className="bg-fifa-card border border-fifa-border rounded-xl p-5 mb-4">
-                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Vistas diarias — últimos 7 días</h4>
-                  <div className="space-y-2">
-                    {last7Days.map((day) => {
-                      const max = Math.max(...last7Days.map(d => d.count), 1)
-                      const pct = Math.round((day.count / max) * 100)
-                      const date = new Date(day.timestamp).toLocaleDateString('es', { weekday: 'short', month: 'short', day: 'numeric' })
-                      return (
-                        <div key={day.timestamp} className="flex items-center gap-3">
-                          <span className="text-xs text-gray-500 w-28 shrink-0 capitalize">{date}</span>
-                          <div className="flex-1 bg-fifa-darker rounded-full h-4 overflow-hidden">
-                            <div
-                              className="h-full bg-gradient-to-r from-fifa-gold/70 to-fifa-gold rounded-full transition-all"
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
-                          <span className="text-xs text-gray-300 w-16 text-right">
-                            {day.count} <span className="text-gray-600">({day.uniques} únicos)</span>
+                <div className="bg-fifa-card border border-fifa-border rounded-xl mb-4 overflow-hidden">
+                  <button
+                    onClick={() => setShowDailyChart(s => !s)}
+                    className="w-full flex items-center justify-between px-5 py-3 hover:bg-fifa-darker/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Vistas diarias — últimos 7 días</h4>
+                      <div className="flex gap-2 text-xs">
+                        {last7Days.slice(-3).map(d => (
+                          <span key={d.timestamp} className="text-fifa-gold font-mono">
+                            {d.count}
                           </span>
-                        </div>
-                      )
-                    })}
-                  </div>
+                        ))}
+                      </div>
+                    </div>
+                    {showDailyChart ? <ChevronUp className="w-4 h-4 text-gray-600" /> : <ChevronDown className="w-4 h-4 text-gray-600" />}
+                  </button>
+                  {showDailyChart && (
+                    <div className="px-5 pb-4 space-y-2 border-t border-fifa-border">
+                      <div className="h-2" />
+                      {last7Days.map((day) => {
+                        const max = Math.max(...last7Days.map(d => d.count), 1)
+                        const pct = Math.round((day.count / max) * 100)
+                        const date = new Date(day.timestamp).toLocaleDateString('es', { weekday: 'short', month: 'short', day: 'numeric' })
+                        return (
+                          <div key={day.timestamp} className="flex items-center gap-3">
+                            <span className="text-xs text-gray-500 w-24 shrink-0 capitalize">{date}</span>
+                            <div className="flex-1 bg-fifa-darker rounded-full h-3 overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-fifa-gold/70 to-fifa-gold rounded-full transition-all"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                            <span className="text-xs text-gray-300 w-14 text-right tabular-nums">
+                              {day.count} <span className="text-gray-600">({day.uniques})</span>
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -511,24 +596,35 @@ export default function DevDashboard({ onLogout }) {
             </div>
           </div>
 
-          {/* Last 7 days local activity */}
+          {/* Last 7 days local activity — collapsible */}
           {Object.keys(local.daily).length > 0 && (
-            <div className="bg-fifa-card border border-fifa-border rounded-xl p-5">
-              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Actividad local — últimos días</h4>
-              <div className="space-y-1.5">
-                {Object.entries(local.daily)
-                  .sort(([a], [b]) => b.localeCompare(a))
-                  .slice(0, 7)
-                  .map(([date, events]) => {
-                    const total = Object.values(events).reduce((a, b) => a + b, 0)
-                    return (
-                      <div key={date} className="flex items-center justify-between text-xs">
-                        <span className="text-gray-500">{new Date(date + 'T12:00:00').toLocaleDateString('es', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-                        <span className="text-gray-400">{total} eventos</span>
-                      </div>
-                    )
-                  })}
-              </div>
+            <div className="bg-fifa-card border border-fifa-border rounded-xl overflow-hidden">
+              <button
+                onClick={() => setShowLocalDaily(s => !s)}
+                className="w-full flex items-center justify-between px-5 py-3 hover:bg-fifa-darker/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Actividad local — últimos días</h4>
+                  <span className="text-xs text-gray-600">{Object.keys(local.daily).length} días registrados</span>
+                </div>
+                {showLocalDaily ? <ChevronUp className="w-4 h-4 text-gray-600" /> : <ChevronDown className="w-4 h-4 text-gray-600" />}
+              </button>
+              {showLocalDaily && (
+                <div className="px-5 pb-4 space-y-1.5 border-t border-fifa-border pt-3">
+                  {Object.entries(local.daily)
+                    .sort(([a], [b]) => b.localeCompare(a))
+                    .slice(0, 7)
+                    .map(([date, events]) => {
+                      const total = Object.values(events).reduce((a, b) => a + b, 0)
+                      return (
+                        <div key={date} className="flex items-center justify-between text-xs">
+                          <span className="text-gray-500">{new Date(date + 'T12:00:00').toLocaleDateString('es', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                          <span className="text-gray-400 tabular-nums">{total} eventos</span>
+                        </div>
+                      )
+                    })}
+                </div>
+              )}
             </div>
           )}
         </section>

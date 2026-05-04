@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { MessageCircle, MapPin, Plus, Clock, Phone, CheckCircle, Loader, Search, Send, Users, Shield, ImagePlus, X } from 'lucide-react'
-import { ref, push, onValue, serverTimestamp, query, limitToLast, orderByChild } from 'firebase/database'
+import { MessageCircle, MapPin, Plus, Clock, Phone, CheckCircle, Loader, Search, Send, Users, Shield, ImagePlus, X, AlertTriangle } from 'lucide-react'
+import { ref, push, onValue, remove, serverTimestamp, query, limitToLast, orderByChild } from 'firebase/database'
 import { db, auth, signInAnonymously, isFirebaseConfigured } from '../../lib/firebase'
 import { CITIES_BY_COUNTRY, LATAM_COUNTRY_IDS } from '../../data/cities.js'
 
@@ -17,7 +17,10 @@ function timeAgo(ts) {
 }
 
 // ── COMPRIMIR IMAGEN CON CANVAS ───────────────────────────────────────
-function compressImage(file, maxPx = 600, quality = 0.65) {
+// Límite: ~30KB base64 (~40,000 chars) para que Firebase pueda sincronizar bien en móvil
+const MAX_B64_CHARS = 40000
+
+function compressImage(file, maxPx = 300, quality = 0.4) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = e => {
@@ -30,7 +33,11 @@ function compressImage(file, maxPx = 600, quality = 0.65) {
         canvas.width = w
         canvas.height = h
         canvas.getContext('2d').drawImage(img, 0, 0, w, h)
-        resolve(canvas.toDataURL('image/jpeg', quality))
+        let b64 = canvas.toDataURL('image/jpeg', quality)
+        // Recomprimir si sigue siendo grande
+        if (b64.length > MAX_B64_CHARS) b64 = canvas.toDataURL('image/jpeg', 0.25)
+        if (b64.length > MAX_B64_CHARS) b64 = canvas.toDataURL('image/jpeg', 0.15)
+        resolve(b64)
       }
       img.onerror = reject
       img.src = e.target.result
@@ -50,8 +57,24 @@ function GlobalChat({ uid, bannedUids }) {
   const [settingApodo, setSettingApodo] = useState(!localStorage.getItem('mundial26-apodo'))
   const [sending, setSending] = useState(false)
   const [expandedImg, setExpandedImg] = useState(null)
+  const [adminWarning, setAdminWarning] = useState(null)
   const bottomRef = useRef(null)
   const fileRef = useRef(null)
+
+  // Escuchar avisos del administrador
+  useEffect(() => {
+    if (!uid || !isFirebaseConfigured || !db) return
+    const unsub = onValue(ref(db, `warnings/${uid}`), snap => {
+      const data = snap.val()
+      if (data && data.message) setAdminWarning(data.message)
+    })
+    return () => unsub()
+  }, [uid])
+
+  function dismissWarning() {
+    setAdminWarning(null)
+    if (uid) remove(ref(db, `warnings/${uid}`)).catch(() => {})
+  }
 
   const isBanned = uid && bannedUids[uid]
 
@@ -109,7 +132,10 @@ function GlobalChat({ uid, bannedUids }) {
       await push(ref(db, 'chat/messages'), payload)
       setText('')
       setImagePreview(null)
-    } catch {}
+    } catch (err) {
+      console.error('Error enviando mensaje:', err)
+      alert('No se pudo enviar el mensaje. Verifica tu conexión.')
+    }
     setSending(false)
   }
 
@@ -275,6 +301,30 @@ function GlobalChat({ uid, bannedUids }) {
             <X className="w-8 h-8" />
           </button>
           <img src={expandedImg} alt="imagen ampliada" className="max-w-full max-h-full rounded-xl object-contain" />
+        </div>
+      )}
+
+      {/* Admin warning modal */}
+      {adminWarning && (
+        <div className="fixed inset-0 z-[300] bg-black/70 flex items-center justify-center p-4">
+          <div className="bg-fifa-card border border-yellow-500/50 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-yellow-400" />
+              </div>
+              <div>
+                <p className="text-white font-semibold text-sm">Aviso del Administrador</p>
+                <p className="text-gray-500 text-xs">MUNDIAL26</p>
+              </div>
+            </div>
+            <p className="text-gray-200 text-sm bg-fifa-darker rounded-xl px-4 py-3 mb-4">{adminWarning}</p>
+            <button
+              onClick={dismissWarning}
+              className="w-full py-2.5 bg-fifa-gold text-black font-bold rounded-xl text-sm hover:bg-yellow-300 transition-colors"
+            >
+              Entendido
+            </button>
+          </div>
         </div>
       )}
     </div>
